@@ -15,8 +15,10 @@ const stopIfWeekend = () => {
 };
 const validateCredentials = () => {
   if (!config.credentials.email || !config.credentials.password) {
-    logger.error("Please provide correct credentials");
-    process.exit(1);
+    logger.error(
+      "Please provide correct credentials to login into Darwinbox 🔐"
+    );
+    process.exit();
   }
 };
 
