@@ -2,6 +2,7 @@
 import puppeteer, { Page, LoadEvent, Timeoutable, Response } from "puppeteer";
 import { DARWINBOX, GOOGLE_SIGNIN } from "../constants";
 import parentLogger from "../utils/logger";
+import { ICredentials, IAttendanceDetails } from "../interfaces";
 
 const logger = parentLogger(__filename);
 
@@ -19,14 +20,26 @@ class CrawlDarwinbox {
 
   private readonly password: string;
 
-  constructor(emailId: string, password: string) {
+  private readonly startDate: string;
+
+  private readonly endDate: string;
+
+  private readonly message: string;
+
+  constructor(
+    credentials: ICredentials,
+    attendanceDetails: IAttendanceDetails
+  ) {
     this.waitAndSilentTimeout = {
       timeout: 0,
       waitUntil: "networkidle2"
     };
 
-    this.emailId = emailId;
-    this.password = password;
+    this.emailId = credentials.emailId;
+    this.password = credentials.password;
+    this.startDate = attendanceDetails.startDate;
+    this.endDate = attendanceDetails.endDate;
+    this.message = attendanceDetails.message;
   }
 
   private async googleSignin(page: Page, navigationPromise: Promise<Response>) {
@@ -76,9 +89,10 @@ class CrawlDarwinbox {
 
       if (!attendanceAPIResponse.ok) throw new Error("API failed");
 
-      const { status, error } = await (attendanceAPIResponse.json() as Promise<
-        AttendanceAPIResponse
-      >);
+      const {
+        status,
+        error
+      } = await (attendanceAPIResponse.json() as Promise<AttendanceAPIResponse>);
 
       if (status !== "success") throw new Error(error);
       logger.info("Successfully completed API");
@@ -145,19 +159,22 @@ class CrawlDarwinbox {
         (
           ATTENDANCE_DATE_SELECTOR,
           ATTENDANCE_MESSAGE_SELECTOR,
-          ATTENDANCE_APPLY_SELECTOR
+          ATTENDANCE_APPLY_SELECTOR,
+          startDate,
+          endDate,
+          message
         ) => {
           (document.querySelector(
             ATTENDANCE_DATE_SELECTOR
-          ) as HTMLInputElement).value = "04-11-2020";
+          ) as HTMLInputElement).value = startDate;
 
           (document.querySelector(
             "#punchin-date-to"
-          ) as HTMLInputElement).value = "04-11-2020";
+          ) as HTMLInputElement).value = endDate;
 
           (document.querySelector(
             ATTENDANCE_MESSAGE_SELECTOR
-          ) as HTMLInputElement).value = "Attendance not updated in Darwinbox";
+          ) as HTMLInputElement).value = message;
 
           (document.querySelector(
             ATTENDANCE_APPLY_SELECTOR
@@ -166,7 +183,10 @@ class CrawlDarwinbox {
         DARWINBOX.ATTENDANCE_DATE_SELECTOR,
         DARWINBOX.ATTENDANCE_MESSAGE_SELECTOR,
         DARWINBOX.ATTENDANCE_APPLY_SELECTOR,
-        DARWINBOX.ATTENDANCE_DATE_SELECTOR
+        DARWINBOX.ATTENDANCE_DATE_SELECTOR,
+        this.startDate,
+        this.endDate,
+        this.message
       );
 
       logger.info("Submitted attendance form");
