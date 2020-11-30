@@ -94,7 +94,10 @@ class CrawlDarwinbox {
         error
       } = await (attendanceAPIResponse.json() as Promise<AttendanceAPIResponse>);
 
-      if (status !== "success") throw new Error(error);
+      if (status !== "success") {
+        logger.error(error);
+        return;
+      }
       logger.info("Successfully completed API");
     } catch (ex) {
       throw new Error(ex);
@@ -183,7 +186,6 @@ class CrawlDarwinbox {
         DARWINBOX.ATTENDANCE_DATE_SELECTOR,
         DARWINBOX.ATTENDANCE_MESSAGE_SELECTOR,
         DARWINBOX.ATTENDANCE_APPLY_SELECTOR,
-        DARWINBOX.ATTENDANCE_DATE_SELECTOR,
         this.startDate,
         this.endDate,
         this.message
