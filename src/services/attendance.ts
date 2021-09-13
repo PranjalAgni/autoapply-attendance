@@ -1,4 +1,7 @@
 /* eslint-disable object-curly-newline */
+
+// import StealthPlugin from "puppeteer-extra-plugin-stealth";
+// import AdblockerPlugin from "puppeteer-extra-plugin-adblocker";
 import puppeteer, { Page, LoadEvent, Timeoutable, Response } from "puppeteer";
 import { DARWINBOX, GOOGLE_SIGNIN } from "../constants";
 import parentLogger from "../utils/logger";
@@ -32,7 +35,7 @@ class CrawlDarwinbox {
   ) {
     this.waitAndSilentTimeout = {
       timeout: 0,
-      waitUntil: "networkidle2"
+      waitUntil: "networkidle0"
     };
 
     this.emailId = credentials.emailId;
@@ -44,7 +47,12 @@ class CrawlDarwinbox {
 
   private async googleSignin(page: Page, navigationPromise: Promise<Response>) {
     try {
-      await page.goto(DARWINBOX.WEBSITE_URL, this.waitAndSilentTimeout);
+      await page.goto(DARWINBOX.WEBSITE_URL);
+      const url = await page.url();
+      if (url === "https://highradius.darwinbox.in/") return;
+
+      await page.waitForTimeout(5000);
+
       await navigationPromise;
       await page.waitForSelector(
         GOOGLE_SIGNIN.EMAIL_SELECTOR,
@@ -74,7 +82,26 @@ class CrawlDarwinbox {
   }
 
   private async getBrowserPage(): Promise<Page> {
-    const browser = await puppeteer.launch({ headless: false });
+    // puppeteer.use(AdblockerPlugin({ blockTrackers: true }));
+    // puppeteer.use(StealthPlugin());
+
+    const browser = await puppeteer.launch({
+      headless: false,
+      product: "firefox",
+      ignoreDefaultArgs: ["--disable-extensions"],
+      userDataDir: "./tmp",
+      ignoreHTTPSErrors: true,
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-infobars",
+        "--window-position=0,0",
+        "--ignore-certifcate-errors",
+        "--ignore-certifcate-errors-spki-list",
+        '--user-agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3312.0 Safari/537.36"',
+        "--single-process"
+      ]
+    });
     const page = await browser.newPage();
     return page;
   }
@@ -89,10 +116,8 @@ class CrawlDarwinbox {
 
       if (!attendanceAPIResponse.ok) throw new Error("API failed");
 
-      const {
-        status,
-        error
-      } = await (attendanceAPIResponse.json() as Promise<AttendanceAPIResponse>);
+      const { status, error } =
+        await (attendanceAPIResponse.json() as Promise<AttendanceAPIResponse>);
 
       if (status !== "success") {
         logger.error(error);
@@ -139,9 +164,11 @@ class CrawlDarwinbox {
         const requestAttendanceElt = document.querySelector(
           ATTENDANCE_REQUEST_SELECTOR
         ) as HTMLElement;
-
+        requestAttendanceElt.click();
         requestAttendanceElt.click();
       }, DARWINBOX.ATTENDANCE_REQUEST_SELECTOR);
+
+      logger.info("Clicked on apply btn");
 
       await navigationPromise;
 
@@ -167,21 +194,23 @@ class CrawlDarwinbox {
           endDate,
           message
         ) => {
-          (document.querySelector(
-            ATTENDANCE_DATE_SELECTOR
-          ) as HTMLInputElement).value = startDate;
+          (
+            document.querySelector(ATTENDANCE_DATE_SELECTOR) as HTMLInputElement
+          ).value = startDate;
 
-          (document.querySelector(
-            "#punchin-date-to"
-          ) as HTMLInputElement).value = endDate;
+          (
+            document.querySelector("#punchin-date-to") as HTMLInputElement
+          ).value = endDate;
 
-          (document.querySelector(
-            ATTENDANCE_MESSAGE_SELECTOR
-          ) as HTMLInputElement).value = message;
+          (
+            document.querySelector(
+              ATTENDANCE_MESSAGE_SELECTOR
+            ) as HTMLInputElement
+          ).value = message;
 
-          (document.querySelector(
-            ATTENDANCE_APPLY_SELECTOR
-          ) as HTMLElement).click();
+          (
+            document.querySelector(ATTENDANCE_APPLY_SELECTOR) as HTMLElement
+          ).click();
         },
         DARWINBOX.ATTENDANCE_DATE_SELECTOR,
         DARWINBOX.ATTENDANCE_MESSAGE_SELECTOR,
@@ -199,10 +228,11 @@ class CrawlDarwinbox {
 
   async applyAttendance() {
     const page = await this.getBrowserPage();
-    const navigationPromise = page.waitForNavigation(this.waitAndSilentTimeout);
+    const navigationPromise = page.waitForNavigation();
+    console.log("Start to sign in....");
     await this.googleSignin(page, navigationPromise);
     await this.fillAttendanceForm(page, navigationPromise);
-    await this.monitorAttendanceAPIRequest(page);
+    // await this.monitorAttendanceAPIRequest(page);
   }
 }
 

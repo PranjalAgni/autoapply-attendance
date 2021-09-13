@@ -41,7 +41,7 @@ const getCredentialsAndFormDetails = () => {
 };
 
 const main = async () => {
-  stopIfWeekend();
+  // stopIfWeekend();
   validateCredentials();
   const { credentials, attendanceDetails } = getCredentialsAndFormDetails();
   const crawlDarwinBox = new CrawlDarwinbox(credentials, attendanceDetails);

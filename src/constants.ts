@@ -1,5 +1,5 @@
 export const DARWINBOX = {
-  WEBSITE_URL: "https://highradius.darwinbox.in",
+  WEBSITE_URL: "https://highradius.darwinbox.in/",
   ATTENDANCE_API_URL: "https://highradius.darwinbox.in/request/attendance",
   MENU_ITEM_SELECTOR: ".single-menu-item",
   MENU_ITEM_SELECTOR_LINK: ".single-menu-item a",
@@ -17,7 +17,7 @@ export const DARWINBOX = {
 };
 
 export const GOOGLE_SIGNIN = {
-  EMAIL_SELECTOR: "input[type='email']",
+  EMAIL_SELECTOR: "#identifierId",
   NEXT_SELECTOR: "#identifierNext",
   PASSWORD_SELECTOR: "input[type='password']",
   SUBMIT_BTN_SELECTOR: "#passwordNext"
