@@ -47,12 +47,7 @@ class CrawlDarwinbox {
 
   private async googleSignin(page: Page, navigationPromise: Promise<Response>) {
     try {
-      await page.goto(DARWINBOX.WEBSITE_URL);
-      const url = await page.url();
-      if (url === "https://highradius.darwinbox.in/") return;
-
       await page.waitForTimeout(5000);
-
       await navigationPromise;
       await page.waitForSelector(
         GOOGLE_SIGNIN.EMAIL_SELECTOR,
@@ -98,10 +93,11 @@ class CrawlDarwinbox {
         "--window-position=0,0",
         "--ignore-certifcate-errors",
         "--ignore-certifcate-errors-spki-list",
-        '--user-agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3312.0 Safari/537.36"',
-        "--single-process"
+        "--single-process",
+        "--window-size=1900,1000"
       ]
     });
+
     const page = await browser.newPage();
     return page;
   }
@@ -161,11 +157,11 @@ class CrawlDarwinbox {
       );
 
       await page.evaluate((ATTENDANCE_REQUEST_SELECTOR) => {
-        const requestAttendanceElt = document.querySelector(
-          ATTENDANCE_REQUEST_SELECTOR
-        ) as HTMLElement;
-        requestAttendanceElt.click();
-        requestAttendanceElt.click();
+        (
+          document.querySelector(ATTENDANCE_REQUEST_SELECTOR) as HTMLElement
+        ).click();
+
+        console.log("Clicked...");
       }, DARWINBOX.ATTENDANCE_REQUEST_SELECTOR);
 
       logger.info("Clicked on apply btn");
@@ -187,7 +183,8 @@ class CrawlDarwinbox {
 
       await page.evaluate(
         (
-          ATTENDANCE_DATE_SELECTOR,
+          ATTENDANCE_DATE_SELECTOR_FROM,
+          ATTENDANCE_DATE_SELECTOR_TO,
           ATTENDANCE_MESSAGE_SELECTOR,
           ATTENDANCE_APPLY_SELECTOR,
           startDate,
@@ -195,11 +192,15 @@ class CrawlDarwinbox {
           message
         ) => {
           (
-            document.querySelector(ATTENDANCE_DATE_SELECTOR) as HTMLInputElement
+            document.querySelector(
+              ATTENDANCE_DATE_SELECTOR_FROM
+            ) as HTMLInputElement
           ).value = startDate;
 
           (
-            document.querySelector("#punchin-date-to") as HTMLInputElement
+            document.querySelector(
+              ATTENDANCE_DATE_SELECTOR_TO
+            ) as HTMLInputElement
           ).value = endDate;
 
           (
@@ -208,11 +209,12 @@ class CrawlDarwinbox {
             ) as HTMLInputElement
           ).value = message;
 
-          (
-            document.querySelector(ATTENDANCE_APPLY_SELECTOR) as HTMLElement
-          ).click();
+          // (
+          //   document.querySelector(ATTENDANCE_APPLY_SELECTOR) as HTMLElement
+          // ).click();
         },
-        DARWINBOX.ATTENDANCE_DATE_SELECTOR,
+        DARWINBOX.ATTENDANCE_DATE_SELECTOR_FROM,
+        DARWINBOX.ATTENDANCE_DATE_SELECTOR_TO,
         DARWINBOX.ATTENDANCE_MESSAGE_SELECTOR,
         DARWINBOX.ATTENDANCE_APPLY_SELECTOR,
         this.startDate,
@@ -229,8 +231,13 @@ class CrawlDarwinbox {
   async applyAttendance() {
     const page = await this.getBrowserPage();
     const navigationPromise = page.waitForNavigation();
-    console.log("Start to sign in....");
-    await this.googleSignin(page, navigationPromise);
+    await page.goto(DARWINBOX.WEBSITE_URL);
+    const url = await page.url();
+    if (url !== "https://highradius.darwinbox.in/") {
+      logger.info("Starting to sign in");
+      await this.googleSignin(page, navigationPromise);
+    }
+
     await this.fillAttendanceForm(page, navigationPromise);
     // await this.monitorAttendanceAPIRequest(page);
   }

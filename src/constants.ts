@@ -11,7 +11,8 @@ export const DARWINBOX = {
     "select[name='AttendanceRequestForm[edit_reason_id]']",
   ATTENDANCE_LOCATION_SELECTOR:
     "select[name='AttendanceRequestForm[location]']",
-  ATTENDANCE_DATE_SELECTOR: "#punchin-date",
+  ATTENDANCE_DATE_SELECTOR_FROM: "#punchin-date",
+  ATTENDANCE_DATE_SELECTOR_TO: "#punchin-date-to",
   ATTENDANCE_MESSAGE_SELECTOR: "#AttendanceRequestForm_message",
   ATTENDANCE_APPLY_SELECTOR: "#add_request_btn"
 };
