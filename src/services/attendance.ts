@@ -1,7 +1,5 @@
 /* eslint-disable object-curly-newline */
 
-// import StealthPlugin from "puppeteer-extra-plugin-stealth";
-// import AdblockerPlugin from "puppeteer-extra-plugin-adblocker";
 import puppeteer, { Page, LoadEvent, Timeoutable, Response } from "puppeteer";
 import { DARWINBOX, GOOGLE_SIGNIN } from "../constants";
 import parentLogger from "../utils/logger";
@@ -77,9 +75,6 @@ class CrawlDarwinbox {
   }
 
   private async getBrowserPage(): Promise<Page> {
-    // puppeteer.use(AdblockerPlugin({ blockTrackers: true }));
-    // puppeteer.use(StealthPlugin());
-
     const browser = await puppeteer.launch({
       headless: false,
       product: "firefox",
@@ -157,17 +152,18 @@ class CrawlDarwinbox {
       );
 
       await page.evaluate((ATTENDANCE_REQUEST_SELECTOR) => {
-        (
-          document.querySelector(ATTENDANCE_REQUEST_SELECTOR) as HTMLElement
-        ).click();
+        const applyButton = document.querySelector(
+          ATTENDANCE_REQUEST_SELECTOR
+        ) as HTMLButtonElement;
 
-        console.log("Clicked...");
+        setTimeout(() => {
+          applyButton.click();
+        }, 5000);
       }, DARWINBOX.ATTENDANCE_REQUEST_SELECTOR);
 
       logger.info("Clicked on apply btn");
 
       await navigationPromise;
-
       await page.waitForSelector(
         DARWINBOX.ATTENDANCE_TYPE_SELECTOR,
         this.waitAndSilentTimeout
@@ -209,9 +205,9 @@ class CrawlDarwinbox {
             ) as HTMLInputElement
           ).value = message;
 
-          // (
-          //   document.querySelector(ATTENDANCE_APPLY_SELECTOR) as HTMLElement
-          // ).click();
+          (
+            document.querySelector(ATTENDANCE_APPLY_SELECTOR) as HTMLElement
+          ).click();
         },
         DARWINBOX.ATTENDANCE_DATE_SELECTOR_FROM,
         DARWINBOX.ATTENDANCE_DATE_SELECTOR_TO,
@@ -239,7 +235,8 @@ class CrawlDarwinbox {
     }
 
     await this.fillAttendanceForm(page, navigationPromise);
-    // await this.monitorAttendanceAPIRequest(page);
+    logger.info("Attendance applied...");
+    await this.monitorAttendanceAPIRequest(page);
   }
 }
 

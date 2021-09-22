@@ -1,4 +1,4 @@
-import { isSaturday, isSunday } from "date-fns";
+// import { isSaturday, isSunday } from "date-fns";
 import config from "./config/index";
 import { ICredentials, IAttendanceDetails } from "./interfaces";
 import CrawlDarwinbox from "./services/attendance";
@@ -6,13 +6,14 @@ import parentLogger from "./utils/logger";
 
 const logger = parentLogger(__filename);
 
-const stopIfWeekend = () => {
-  const todaysDate = new Date();
-  if (isSaturday(todaysDate) || isSunday(todaysDate)) {
-    logger.info("Gracefully exiting as today is weekend 👋");
-    process.exit();
-  }
-};
+// const stopIfWeekend = () => {
+//   const todaysDate = new Date();
+//   if (isSaturday(todaysDate) || isSunday(todaysDate)) {
+//     logger.info("Gracefully exiting as today is weekend 👋");
+//     process.exit();
+//   }
+// };
+
 const validateCredentials = () => {
   if (!config.credentials.email || !config.credentials.password) {
     logger.error(
